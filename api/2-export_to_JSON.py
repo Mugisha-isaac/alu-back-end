@@ -2,8 +2,9 @@
 import requests
 import sys
 import os
+import json
 
-def get_user_info_and_export_to_csv(userId):
+def get_user_info_and_export_to_json(userId):
     userInfoUrl = 'https://jsonplaceholder.typicode.com/users/{userId}'.format(userId=userId)
     userTasksInfoUrl = 'https://jsonplaceholder.typicode.com/users/{userId}/todos'.format(userId=userId)
 
@@ -25,15 +26,26 @@ def get_user_info_and_export_to_csv(userId):
             total_tasks = len(tasks)
 
 
-            # Prepare CSV file
-            file = f"{userId}.csv"
-            fieldNames = ['USER_ID', 'USERNAME', 'TASK_COMPLETED_STATUS', 'TASK_TITLE']
-            with open(file, mode='w') as csv_file:
-                csv_file.write(','.join(fieldNames) + '\n')
-                for task in tasks:
-                    csv_file.write(f"{userId},{user['username']},{task['completed']},{task['title']}\n")
+            # Prepare JSON
+            data = {
+                "UserId": userId,
+                "UserName": user['username'],
+                "Tasks": [
+                    {
+                        "TaskId": task['id'],
+                        "Title": task['title'],
+                        "Completed": task['completed']
+                    } for task in tasks
+                ]
+            }
 
-            print(f"User info and tasks have been exported to {csv_file}")            
+            # Export to JSON
+            json_file = f"{userId}.json"
+            with open(json_file, 'w') as file:
+                file.write(json.dumps(data, indent=4))
+            
+
+            print(f"User info and tasks have been exported to {json_file}")            
 
         else: 
             print(f"Unexpected status code: {response.status_code}")
@@ -48,4 +60,4 @@ if __name__ == '__main__':
         sys.exit(1)
     else:
         userId = sys.argv[1]
-        get_user_info_and_export_to_csv(userId)
+        get_user_info_and_export_to_json(userId)
