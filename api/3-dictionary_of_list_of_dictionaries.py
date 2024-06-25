@@ -1,51 +1,49 @@
 #!/usr/bin/python3
 import requests
-import os
 import json
 
 def get_all_users_tasks_and_export_to_json():
-    usersInfoUrl = 'https://jsonplaceholder.typicode.com/users'
-
+    users_info_url = 'https://jsonplaceholder.typicode.com/users'
+    
     try:
-        # Fetching user 
-        usersInfoResponse = requests.get(usersInfoUrl)
-        usersInfoResponse.raise_for_status()
-
-        if usersInfoResponse.status_code == 200:
-            users = usersInfoResponse.json() 
+        # Fetch all users
+        users_info_response = requests.get(users_info_url)
+        users_info_response.raise_for_status()
+        
+        if users_info_response.status_code == 200:
+            users = users_info_response.json()
             data = {}
-
+            
+            # Iterate over each user to fetch their tasks
             for user in users:
-                userId = user['id']
-                userTasksInfoUrl = 'https://jsonplaceholder.typicode.com/users/{userId}/todos'.format(userId=userId)
-                userTasksInfoResponse = requests.get(userTasksInfoUrl)
-                userTasksInfoResponse.raise_for_status()
-
-                if userTasksInfoResponse.status_code == 200:
-                    tasks = userTasksInfoResponse.json()
-
-                    # Prepare JSON
-                    data[str(userId)] = [{
+                user_id = user['id']
+                user_tasks_info_url = f'https://jsonplaceholder.typicode.com/users/{user_id}/todos'
+                
+                user_tasks_response = requests.get(user_tasks_info_url)
+                user_tasks_response.raise_for_status()
+                
+                if user_tasks_response.status_code == 200:
+                    tasks = user_tasks_response.json()
+                    
+                    # Prepare user's task data
+                    data[str(user_id)] = [{
                         "task": task['title'],
                         "completed": task['completed'],
                         "username": user['username']
-                    } for task in tasks]    
-
-                    # Export to JSON
-
-                    json_file = "todo_all_employees.json"
-                    with open(json_file, 'w') as file:
-                        file.write(json.dumps(data, indent=4))  
-
-                    print(f" User {user['username']} info and his/her tasks have been exported to {json_file}")  
-
-        else: 
-            print(f"Unexpected status code: {response.status_code}")
-
-    except requests.exceptions.HTTPError as e:
-        print(f"Error: {e}")
-
+                    } for task in tasks]
+            
+            # Export to JSON
+            json_file = "todo_all_employees.json"
+            with open(json_file, 'w', encoding='utf-8') as file:
+                json.dump(data, file, indent=4)
+            
+            print(f"All users' info and tasks have been exported to {json_file}")
+        
+        else:
+            print(f"Unexpected status code: {users_info_response.status_code}")
+    
+    except requests.exceptions.HTTPError as err:
+        print(f"Error: {err}")
 
 if __name__ == '__main__':
-
     get_all_users_tasks_and_export_to_json()

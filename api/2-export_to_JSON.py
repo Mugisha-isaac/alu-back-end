@@ -1,34 +1,29 @@
 #!/usr/bin/python3
+import json
+import os
 import requests
 import sys
-import os
-import json
 
-def get_user_info_and_export_to_json(userId):
-    userInfoUrl = 'https://jsonplaceholder.typicode.com/users/{userId}'.format(userId=userId)
-    userTasksInfoUrl = 'https://jsonplaceholder.typicode.com/users/{userId}/todos'.format(userId=userId)
+def get_user_info_and_export_to_json(user_id):
+    user_info_url = 'https://jsonplaceholder.typicode.com/users/{user_id}'.format(user_id=user_id)
+    user_tasks_info_url = 'https://jsonplaceholder.typicode.com/users/{user_id}/todos'.format(user_id=user_id)
 
     try:
-        # Fetching user 
-        userInfoResponse = requests.get(userInfoUrl)
-        userInfoResponse.raise_for_status()
+        # Fetching user information
+        user_info_response = requests.get(user_info_url)
+        user_info_response.raise_for_status()
 
         # Fetching user tasks
+        user_tasks_info_response = requests.get(user_tasks_info_url)
+        user_tasks_info_response.raise_for_status()
 
-        userTasksInfoResponse = requests.get(userTasksInfoUrl)
-        userTasksInfoResponse.raise_for_status()
-
-        if userInfoResponse.status_code == 200 and userTasksInfoResponse.status_code == 200:
-            user = userInfoResponse.json() 
-            tasks = userTasksInfoResponse.json()
+        if user_info_response.status_code == 200 and user_tasks_info_response.status_code == 200:
+            user = user_info_response.json()
+            tasks = user_tasks_info_response.json()
             
-            # Calculate Tasks Progress
-            total_tasks = len(tasks)
-
-
-            # Prepare JSON
+            # Prepare JSON data
             data = {
-                str(userId): [{
+                str(user_id): [{
                     "task": task['title'],
                     "completed": task['completed'],
                     "username": user['username']
@@ -36,24 +31,25 @@ def get_user_info_and_export_to_json(userId):
             }
 
             # Export to JSON
-            json_file = f"{userId}.json"
-            with open(json_file, 'w') as file:
-                file.write(json.dumps(data, indent=4))
+            json_file = f"{user_id}.json"
+            with open(json_file, 'w', encoding='utf-8') as file:
+                json.dump(data, file, indent=4)
             
+            print(f"User info and tasks have been exported to {json_file}")
+        else:
+            print(f"Unexpected status code: {user_info_response.status_code} or {user_tasks_info_response.status_code}")
 
-            print(f"User info and tasks have been exported to {json_file}")            
-
-        else: 
-            print(f"Unexpected status code: {response.status_code}")
-
-    except requests.exceptions.HTTPError as e:
-        print(f"Error: {e}")
-
+    except requests.exceptions.HTTPError as err:
+        print(f"Error: {err}")
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
-        print("Usage: {} <employeeId>".format(sys.argv[0]))
+        print(f"Usage: {os.path.basename(sys.argv[0])} <employee_id>")
         sys.exit(1)
     else:
-        userId = sys.argv[1]
-        get_user_info_and_export_to_json(userId)
+        try:
+            user_id = int(sys.argv[1])
+            get_user_info_and_export_to_json(user_id)
+        except ValueError:
+            print("Invalid employee ID. Please provide a valid integer.")
+            sys.exit(1)

@@ -1,51 +1,48 @@
 #!/usr/bin/python3
+import os
 import requests
 import sys
-import os
 
-def get_user_info_and_export_to_csv(userId):
-    userInfoUrl = 'https://jsonplaceholder.typicode.com/users/{userId}'.format(userId=userId)
-    userTasksInfoUrl = 'https://jsonplaceholder.typicode.com/users/{userId}/todos'.format(userId=userId)
+def get_user_info_and_export_to_csv(user_id):
+    user_info_url = f'https://jsonplaceholder.typicode.com/users/{user_id}'
+    user_tasks_info_url = f'https://jsonplaceholder.typicode.com/users/{user_id}/todos'
 
     try:
-        # Fetching user 
-        userInfoResponse = requests.get(userInfoUrl)
-        userInfoResponse.raise_for_status()
+        # Fetch user information
+        user_info_response = requests.get(user_info_url)
+        user_info_response.raise_for_status()
 
-        # Fetching user tasks
+        # Fetch user tasks
+        user_tasks_info_response = requests.get(user_tasks_info_url)
+        user_tasks_info_response.raise_for_status()
 
-        userTasksInfoResponse = requests.get(userTasksInfoUrl)
-        userTasksInfoResponse.raise_for_status()
-
-        if userInfoResponse.status_code == 200 and userTasksInfoResponse.status_code == 200:
-            user = userInfoResponse.json() 
-            tasks = userTasksInfoResponse.json()
+        if user_info_response.status_code == 200 and user_tasks_info_response.status_code == 200:
+            user = user_info_response.json()
+            tasks = user_tasks_info_response.json()
             
-            # Calculate Tasks Progress
-            total_tasks = len(tasks)
-
-
-            # Prepare CSV file
-            file = f"{userId}.csv"
-            fieldNames = ['USER_ID', 'USERNAME', 'TASK_COMPLETED_STATUS', 'TASK_TITLE']
-            with open(file, mode='w') as csv_file:
-                csv_file.write(','.join(fieldNames) + '\n')
+            # Prepare CSV data
+            csv_file = f"{user_id}.csv"
+            field_names = ['USER_ID', 'USERNAME', 'TASK_COMPLETED_STATUS', 'TASK_TITLE']
+            with open(csv_file, mode='w', encoding='utf-8') as file:
+                file.write(','.join(field_names) + '\n')
                 for task in tasks:
-                    csv_file.write(f"{userId},{user['username']},{task['completed']},{task['title']}\n")
+                    file.write(f"{user_id},{user['username']},{task['completed']},{task['title']}\n")
 
-            print(f"User info and tasks have been exported to {csv_file}")            
+            print(f"User info and tasks have been exported to {csv_file}")
+        else:
+            print(f"Unexpected status code: {user_info_response.status_code} or {user_tasks_info_response.status_code}")
 
-        else: 
-            print(f"Unexpected status code: {response.status_code}")
-
-    except requests.exceptions.HTTPError as e:
-        print(f"Error: {e}")
-
+    except requests.exceptions.HTTPError as err:
+        print(f"Error: {err}")
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
-        print("Usage: {} <employeeId>".format(sys.argv[0]))
+        print(f"Usage: {os.path.basename(sys.argv[0])} <employee_id>")
         sys.exit(1)
     else:
-        userId = sys.argv[1]
-        get_user_info_and_export_to_csv(userId)
+        try:
+            user_id = int(sys.argv[1])
+            get_user_info_and_export_to_csv(user_id)
+        except ValueError:
+            print("Invalid employee ID. Please provide a valid integer.")
+            sys.exit(1)
