@@ -28,15 +28,11 @@ def get_user_info_and_export_to_json(userId):
 
             # Prepare JSON
             data = {
-                "UserId": userId,
-                "UserName": user['username'],
-                "Tasks": [
-                    {
-                        "TaskId": task['id'],
-                        "Title": task['title'],
-                        "Completed": task['completed']
-                    } for task in tasks
-                ]
+                str(userId): [{
+                    "task": task['title'],
+                    "completed": task['completed'],
+                    "username": user['username']
+                } for task in tasks]
             }
 
             # Export to JSON
