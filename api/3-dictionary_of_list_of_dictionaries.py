@@ -1,56 +1,52 @@
 #!/usr/bin/python3
-import requests
+"""
+Python script that exports data in the JSON format
+"""
 import json
+import requests
 
 
-def get_all_users_tasks_and_export_to_json():
-    users_info_url = "https://jsonplaceholder.typicode.com/users"
+def get_all_users():
+    """
+    Get the list of all users
+    """
+    url = "https://jsonplaceholder.typicode.com/users"
+    response = requests.get(url)
+    return response.json()
 
-    try:
-        # Fetch all users
-        users_info_response = requests.get(users_info_url)
-        users_info_response.raise_for_status()
 
-        if users_info_response.status_code == 200:
-            users = users_info_response.json()
-            data = {}
+def get_user_todos(user_id):
+    """
+    Get the TODO list for a given user ID
+    """
+    url = "https://jsonplaceholder.typicode.com/todos"
+    response = requests.get(url, params={"userId": user_id})
+    return response.json()
 
-            # Iterate over each user to fetch their tasks
-            for user in users:
-                user_id = user["id"]
-                user_tasks_info_url = (
-                    f"https://jsonplaceholder.typicode.com/users/{user_id}/todos"
-                )
 
-                user_tasks_response = requests.get(user_tasks_info_url)
-                user_tasks_response.raise_for_status()
+def export_all_todos_to_json(users):
+    """
+    Export all users' TODO lists to a JSON file
+    """
+    data = {
+        user["id"]: [
+            {
+                "task": todo["title"],
+                "completed": todo["completed"],
+                "username": user["username"]
+            } for todo in get_user_todos(user["id"])
+        ] for user in users
+    }
+    with open("todo_all_employees.json", "w") as jsonfile:
+        json.dump(data, jsonfile)
 
-                if user_tasks_response.status_code == 200:
-                    tasks = user_tasks_response.json()
 
-                    # Prepare user's task data
-                    data[str(user_id)] = [
-                        {
-                            "task": task["title"],
-                            "completed": task["completed"],
-                            "username": user["username"],
-                        }
-                        for task in tasks
-                    ]
-
-            # Export to JSON
-            json_file = "todo_all_employees.json"
-            with open(json_file, "w", encoding="utf-8") as file:
-                json.dump(data, file, indent=4)
-
-            print(f"All users' info and tasks have been exported to {json_file}")
-
-        else:
-            print(f"Unexpected status code: {users_info_response.status_code}")
-
-    except requests.exceptions.HTTPError as err:
-        print(f"Error: {err}")
-
+def main():
+    """
+    Main function to fetch users and their TODO lists, then export to JSON
+    """
+    users = get_all_users()
+    export_all_todos_to_json(users)
 
 if __name__ == "__main__":
-    get_all_users_tasks_and_export_to_json()
+    main()

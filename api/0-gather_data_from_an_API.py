@@ -1,113 +1,52 @@
 #!/usr/bin/python3
 """
-Module: user_info_fetcher
-
-This script fetches user information
-and their task completion progress from
-a placeholder API,
-then prints a summary of completed tasks.
-
-Usage:
-    python3 user_info_fetcher.py <employee_id>
-
-The script expects one argument:
-    employee_id (int): The ID of the user whose
-    information and tasks are to be fetched.
-
-Example:
-    python3 user_info_fetcher.py 1
-
-Dependencies:
-    - requests: To make HTTP requests to the API.
-
-Exception Handling:
-    - Handles HTTP errors during the API requests.
-    - Validates that the provided employee_id is an integer.
-
-Author:
-    MUGISHA ISAAC
+Python script that returns TODO list progress for a given employee ID
 """
-
 import requests
-import sys
+from sys import argv
 
 
-def get_user_info(user_id):
+def get_employee_info(employee_id):
     """
-    Fetches user information and their tasks from a placeholder API, 
-    then prints a summary of completed tasks.
-
-    Args:
-        user_id (int): The ID of the user whose information and tasks 
-                       are to be fetched.
-
-    Raises:
-        requests.exceptions.HTTPError: If the HTTP request returns an 
-                                       unsuccessful status code.
+    Get employee information by employee ID
     """
-    user_info_url = f'https://jsonplaceholder.typicode.com/users/{user_id}'
-    user_tasks_info_url = (
-        f'https://jsonplaceholder.typicode.com/users/{user_id}/todos'
-    )
-
-    try:
-        # Fetching user information
-        user_info_response = requests.get(user_info_url)
-        user_info_response.raise_for_status()
-
-        # Fetching user tasks
-        user_tasks_info_response = requests.get(user_tasks_info_url)
-        user_tasks_info_response.raise_for_status()
-
-        if (user_info_response.status_code == 200 and 
-                user_tasks_info_response.status_code == 200):
-            user = user_info_response.json()
-            tasks = user_tasks_info_response.json()
-            
-            # Calculate Tasks Progress
-            completed_tasks = [task for task in tasks if task['completed']]
-            total_tasks = len(tasks)
-
-            # Output formatted response
-            print(
-                f"Employee {user['name']} is done with tasks"
-                f"({len(completed_tasks)}/{total_tasks}):"
-            )
-            for task in completed_tasks:
-                print(f"\t{task['title']}")
-
-        else: 
-            print(
-                f"Unexpected status code: {user_info_response.status_code} or "
-                f"{user_tasks_info_response.status_code}"
-            )
-
-    except requests.exceptions.HTTPError as err:
-        print(f"Error: {err}")
+    url = f'https://jsonplaceholder.typicode.com/users/{employee_id}/'
+    response = requests.get(url)
+    return response.json()
 
 
-if __name__ == '__main__':
+def get_employee_todos(employee_id):
     """
-    Main entry point of the script.
-
-    Validates the command line argument and calls the function to fetch 
-    and display user information.
-
-    Usage:
-        python3 user_info_fetcher.py <employee_id>
-
-    Example:
-        python3 user_info_fetcher.py 1
+    Get the TODO list of the employee by employee ID
     """
-    # Check for the correct number of command line arguments
-    if len(sys.argv) != 2:
-        print(f"Usage: {sys.argv[0]} <employee_id>")
-        sys.exit(1)
+    url = f'https://jsonplaceholder.typicode.com/users/{employee_id}/todos'
+    response = requests.get(url)
+    return response.json()
+
+
+def main(employee_id):
+    """
+    Main function to fetch and display the TODO list progress of the employee
+    """
+    employee = get_employee_info(employee_id)
+    employee_name = employee.get("name")
+
+    emp_todos = get_employee_todos(employee_id)
+    tasks = {todo.get("title"): todo.get("completed") for todo in emp_todos}
+
+    total_tasks = len(tasks)
+    completed_tasks = [completed for completed in tasks.values() if completed]
+    completed_tasks_count = len(completed_tasks)
+
+    print(f"Employee {employee_name} is done with tasks"
+          f"({completed_tasks_count}/{total_tasks}):")
+    for title, completed in tasks.items():
+        if completed:
+            print(f"\t {title}")
+
+
+if __name__ == "__main__":
+    if len(argv) > 1:
+        main(argv[1])
     else:
-        try:
-            # Validate and convert user_id from string to integer
-            user_id = int(sys.argv[1])
-            get_user_info(user_id)
-        except ValueError:
-            print("Invalid employee ID. Please provide a valid integer.")
-            sys.exit(1)
+        print("Usage: ./0-gather_data_from_an_API.py <employee_id>")

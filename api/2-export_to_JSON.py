@@ -1,71 +1,60 @@
 #!/usr/bin/python3
+"""
+Module to fetch user information and export TODO list to a JSON file
+"""
 import json
-import os
 import requests
 import sys
 
 
-def get_user_info_and_export_to_json(user_id):
-    user_info_url = "https://jsonplaceholder.typicode.com/users/{user_id}".format(
-        user_id=user_id
-    )
-    user_tasks_info_url = (
-        "https://jsonplaceholder.typicode.com/users/{user_id}/todos".format(
-            user_id=user_id
-        )
-    )
+def get_employee_info(employee_id):
+    """
+    Get employee information by employee ID
+    """
+    url = f"https://jsonplaceholder.typicode.com/users/{employee_id}"
+    response = requests.get(url)
+    return response.json()
 
-    try:
-        # Fetching user information
-        user_info_response = requests.get(user_info_url)
-        user_info_response.raise_for_status()
 
-        # Fetching user tasks
-        user_tasks_info_response = requests.get(user_tasks_info_url)
-        user_tasks_info_response.raise_for_status()
+def get_employee_todos(employee_id):
+    """
+    Get the TODO list of the employee by employee ID
+    """
+    url = f"https://jsonplaceholder.typicode.com/users/{employee_id}/todos"
+    response = requests.get(url)
+    return response.json()
 
-        if (
-            user_info_response.status_code == 200
-            and user_tasks_info_response.status_code == 200
-        ):
-            user = user_info_response.json()
-            tasks = user_tasks_info_response.json()
 
-            # Prepare JSON data
-            data = {
-                str(user_id): [
-                    {
-                        "task": task["title"],
-                        "completed": task["completed"],
-                        "username": user["username"],
-                    }
-                    for task in tasks
-                ]
-            }
+def export_to_json(employee_id, todos):
+    """
+    Export TODO list to a JSON file
+    """
+    filename = f"{employee_id}.json"
+    with open(filename, "w") as file:
+        json.dump({employee_id: todos}, file)
 
-            # Export to JSON
-            json_file = f"{user_id}.json"
-            with open(json_file, "w", encoding="utf-8") as file:
-                json.dump(data, file, indent=4)
 
-            print(f"User info and tasks have been exported to {json_file}")
-        else:
-            print(
-                f"Unexpected status code: {user_info_response.status_code} or {user_tasks_info_response.status_code}"
-            )
+def main(employee_id):
+    """
+    Main function to fetch user info and TODO list, then export to JSON
+    """
+    user_info = get_employee_info(employee_id)
+    todos_info = get_employee_todos(employee_id)
 
-    except requests.exceptions.HTTPError as err:
-        print(f"Error: {err}")
+    employee_username = user_info["username"]
 
+    todos_info_sorted = [
+        {
+            "task": task["title"],
+            "completed": task["completed"],
+            "username": employee_username
+        } for task in todos_info
+    ]
+
+    export_to_json(employee_id, todos_info_sorted)
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print(f"Usage: {os.path.basename(sys.argv[0])} <employee_id>")
-        sys.exit(1)
+    if len(sys.argv) > 1:
+        main(sys.argv[1])
     else:
-        try:
-            user_id = int(sys.argv[1])
-            get_user_info_and_export_to_json(user_id)
-        except ValueError:
-            print("Invalid employee ID. Please provide a valid integer.")
-            sys.exit(1)
+        print("Usage: ./2-export_to_JSON.py <employee_id>")

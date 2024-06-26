@@ -1,107 +1,56 @@
 #!/usr/bin/python3
 """
-Module: user_data_exporter
-
-This script fetches user information and their tasks from a placeholder API and exports the data to a CSV file.
-
-Usage:
-    python3 user_data_exporter.py <employee_id>
-
-The script expects one argument:
-    employee_id (int): The ID of the user whose information and tasks are to be fetched.
-
-Example:
-    python3 user_data_exporter.py 1
-
-Dependencies:
-    - requests: To make HTTP requests to the API.
-
-Exception Handling:
-    - Handles HTTP errors during the API requests.
-    - Validates that the provided employee_id is an integer.
-
-Author:
-    MUGISHA ISAAC
+Module to fetch user information and export TODO list to a CSV file
 """
-
-import os
+import csv
 import requests
-import sys
+from sys import argv
 
 
-def get_user_info_and_export_to_csv(user_id):
+def get_employee_info(employee_id):
     """
-    Fetches user information and their tasks from a placeholder API, then exports the data to a CSV file.
-
-    Args:
-        user_id (int): The ID of the user whose information and tasks are to be fetched.
-
-    Raises:
-        requests.exceptions.HTTPError: If the HTTP request returns an unsuccessful status code.
+    Get employee information by employee ID
     """
-    # Define URLs to fetch user information and tasks
-    user_info_url = f"https://jsonplaceholder.typicode.com/users/{user_id}"
-    user_tasks_info_url = f"https://jsonplaceholder.typicode.com/users/{user_id}/todos"
+    url = f'https://jsonplaceholder.typicode.com/users/{employee_id}'
+    response = requests.get(url)
+    return response.json()
 
-    try:
-        # Fetch user information
-        user_info_response = requests.get(user_info_url)
-        user_info_response.raise_for_status()
 
-        # Fetch user tasks
-        user_tasks_info_response = requests.get(user_tasks_info_url)
-        user_tasks_info_response.raise_for_status()
+def get_employee_todos(employee_id):
+    """
+    Get the TODO list of the employee by employee ID
+    """
+    url = f'https://jsonplaceholder.typicode.com/users/{employee_id}/todos'
+    response = requests.get(url)
+    return response.json()
 
-        if (
-            user_info_response.status_code == 200
-            and user_tasks_info_response.status_code == 200
-        ):
-            # Parse JSON responses
-            user = user_info_response.json()
-            tasks = user_tasks_info_response.json()
 
-            # Prepare CSV data
-            csv_file = f"{user_id}.csv"
-            field_names = ["USER_ID", "USERNAME", "TASK_COMPLETED_STATUS", "TASK_TITLE"]
-            with open(csv_file, mode="w", encoding="utf-8") as file:
-                file.write(",".join(field_names) + "\n")
-                for task in tasks:
-                    # Write task data to CSV
-                    file.write(
-                        f"{user_id},{user['username']},{task['completed']},{task['title']}\n"
-                    )
+def export_to_csv(employee_id, username, todos):
+    """
+    Export TODO list to a CSV file
+    """
+    filename = f'{employee_id}.csv'
+    with open(filename, mode='w') as file:
+        file_writer = csv.writer(file, delimiter=',', quoting=csv.QUOTE_ALL)
+        for todo in todos:
+            rowData = [employee_id, username, todo['completed'], todo['title']]
+            file_writer.writerow(rowData)
 
-            print(f"User info and tasks have been exported to {csv_file}")
-        else:
-            print(
-                f"Unexpected status code: {user_info_response.status_code} or {user_tasks_info_response.status_code}"
-            )
 
-    except requests.exceptions.HTTPError as err:
-        print(f"Error: {err}")
+def main(employee_id):
+    """
+    Main function to fetch user info and TODO list, then export to CSV
+    """
+    user = get_employee_info(employee_id)
+    username = user.get("username")
+
+    todos = get_employee_todos(employee_id)
+
+    export_to_csv(employee_id, username, todos)
 
 
 if __name__ == "__main__":
-    """
-    Main entry point of the script.
-
-    Validates the command line argument and calls the function to fetch and export user information.
-
-    Usage:
-        python3 user_data_exporter.py <employee_id>
-
-    Example:
-        python3 user_data_exporter.py 1
-    """
-    # Check for the correct number of command line arguments
-    if len(sys.argv) != 2:
-        print(f"Usage: {os.path.basename(sys.argv[0])} <employee_id>")
-        sys.exit(1)
+    if len(argv) > 1:
+        main(argv[1])
     else:
-        try:
-            # Validate and convert user_id from string to integer
-            user_id = int(sys.argv[1])
-            get_user_info_and_export_to_csv(user_id)
-        except ValueError:
-            print("Invalid employee ID. Please provide a valid integer.")
-            sys.exit(1)
+        print("Usage: ./1-export_to_CSV.py <employee_id>")
