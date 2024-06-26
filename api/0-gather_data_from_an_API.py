@@ -28,18 +28,24 @@ Author:
 import requests
 import sys
 
+
 def get_user_info(user_id):
     """
-    Fetches user information and their tasks from a placeholder API, then prints a summary of completed tasks.
+    Fetches user information and their tasks from a placeholder API, 
+    then prints a summary of completed tasks.
 
     Args:
-        user_id (int): The ID of the user whose information and tasks are to be fetched.
+        user_id (int): The ID of the user whose information and tasks 
+                       are to be fetched.
 
     Raises:
-        requests.exceptions.HTTPError: If the HTTP request returns an unsuccessful status code.
+        requests.exceptions.HTTPError: If the HTTP request returns an 
+                                       unsuccessful status code.
     """
     user_info_url = f'https://jsonplaceholder.typicode.com/users/{user_id}'
-    user_tasks_info_url = f'https://jsonplaceholder.typicode.com/users/{user_id}/todos'
+    user_tasks_info_url = (
+        f'https://jsonplaceholder.typicode.com/users/{user_id}/todos'
+    )
 
     try:
         # Fetching user information
@@ -50,7 +56,8 @@ def get_user_info(user_id):
         user_tasks_info_response = requests.get(user_tasks_info_url)
         user_tasks_info_response.raise_for_status()
 
-        if user_info_response.status_code == 200 and user_tasks_info_response.status_code == 200:
+        if (user_info_response.status_code == 200 and 
+                user_tasks_info_response.status_code == 200):
             user = user_info_response.json()
             tasks = user_tasks_info_response.json()
             
@@ -59,21 +66,29 @@ def get_user_info(user_id):
             total_tasks = len(tasks)
 
             # Output formatted response
-            print(f"Employee {user['name']} is done with tasks({len(completed_tasks)}/{total_tasks}):")
+            print(
+                f"Employee {user['name']} is done with tasks"
+                f"({len(completed_tasks)}/{total_tasks}):"
+            )
             for task in completed_tasks:
                 print(f"\t{task['title']}")
 
         else: 
-            print(f"Unexpected status code: {user_info_response.status_code} or {user_tasks_info_response.status_code}")
+            print(
+                f"Unexpected status code: {user_info_response.status_code} or "
+                f"{user_tasks_info_response.status_code}"
+            )
 
     except requests.exceptions.HTTPError as err:
         print(f"Error: {err}")
+
 
 if __name__ == '__main__':
     """
     Main entry point of the script.
 
-    Validates the command line argument and calls the function to fetch and display user information.
+    Validates the command line argument and calls the function to fetch 
+    and display user information.
 
     Usage:
         python3 user_info_fetcher.py <employee_id>
