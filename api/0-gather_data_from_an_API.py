@@ -2,14 +2,17 @@
 """
 Module: user_info_fetcher
 
-This script fetches user information and their task completion progress from a placeholder API,
+This script fetches user information
+and their task completion progress from
+a placeholder API,
 then prints a summary of completed tasks.
 
 Usage:
     python3 user_info_fetcher.py <employee_id>
 
 The script expects one argument:
-    employee_id (int): The ID of the user whose information and tasks are to be fetched.
+    employee_id (int): The ID of the user whose
+    information and tasks are to be fetched.
 
 Example:
     python3 user_info_fetcher.py 1
